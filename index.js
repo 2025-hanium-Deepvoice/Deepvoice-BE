@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { sequelize, initModels } from './src/db/sequelize.js';
+import authRoutes from './routes/authRoutes.js';
 
 async function bootstrap() {
   await sequelize.authenticate();
@@ -11,7 +12,7 @@ async function bootstrap() {
 
   const app = express();
   app.use(express.json());
-
+  app.use('/auth', authRoutes);
   app.get('/health', async (_, res) => {
     try {
       await sequelize.query('SELECT 1');
