@@ -1,32 +1,43 @@
+// index.js
 import 'dotenv/config';
 import express from 'express';
-import sequelize from './db.js';
-import User from './models/User.js';
+import { sequelize, initModels } from './src/db/sequelize.js';
 
-const app = express();
-app.use(express.json());
+async function bootstrap() {
+  await sequelize.authenticate();
+  await initModels();
+  // 개발 단계: 테이블 없으면 생성 (운영은 마이그레이션 권장)
+  await sequelize.sync();
 
-// DB 연결 & 동기화
-await sequelize.authenticate();
-await sequelize.sync(); // 기존 테이블 없으면 생성
+  const app = express();
+  app.use(express.json());
 
-// 사용자 생성
-app.post('/users', async (req, res) => {
-  try {
-    const { email, name } = req.body;
-    const user = await User.create({ email, name });
-    res.status(201).json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  app.get('/health', async (_, res) => {
+    try {
+      await sequelize.query('SELECT 1');
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ ok: false });
+    }
+  });
+
+  const port = Number(process.env.PORT || 3000);
+  const server = app.listen(port, () =>
+    console.log(`API running on http://localhost:${port}`)
+  );
+
+  // 종료 시 커넥션 종료
+  for (const sig of ['SIGINT', 'SIGTERM']) {
+    process.on(sig, async () => {
+      server.close(async () => {
+        await sequelize.close();
+        process.exit(0);
+      });
+    });
   }
-});
+}
 
-// 사용자 조회
-app.get('/users', async (req, res) => {
-  const users = await User.findAll();
-  res.json(users);
+bootstrap().catch((e) => {
+  console.error('Fatal error:', e);
+  process.exit(1);
 });
-
-app.listen(process.env.PORT, () =>
-  console.log(`API running on http://localhost:${process.env.PORT}`)
-);
