@@ -11,6 +11,7 @@ export default class VoiceAnalysis extends Model {
         detected_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         user_id: { type: DataTypes.BIGINT, allowNull: false },
         duration_seconds: { type: DataTypes.INTEGER, allowNull: true },
+        file_name: { type: DataTypes.STRING, allowNull: true },
       },
       {
         sequelize,
