@@ -6,10 +6,12 @@ export default class VoiceAnalysis extends Model {
       {
         id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
         file_path: { type: DataTypes.STRING, allowNull: true },
-        result: { type: DataTypes.STRING, allowNull: true },
+        is_phishing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }, 
         confidence: { type: DataTypes.FLOAT, allowNull: true },
         detected_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         user_id: { type: DataTypes.BIGINT, allowNull: false },
+        duration_seconds: { type: DataTypes.INTEGER, allowNull: true },
+        file_name: { type: DataTypes.STRING, allowNull: true },
       },
       {
         sequelize,
