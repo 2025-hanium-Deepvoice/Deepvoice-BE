@@ -16,6 +16,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "music-metadata": "^11.7.3",
     "mysql2": "^3.14.3",
     "sequelize": "^6.37.7",
     "zod": "^4.0.17"
@@ -26,7 +27,8 @@
     "@babel/node": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
     "nodemon": "^3.1.10",
-    "prisma": "^6.13.0"
+    "prisma": "^6.13.0",
+    "sequelize-cli": "^6.6.3"
   },
   "keywords": [],
   "description": ""

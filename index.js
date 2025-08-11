@@ -9,7 +9,7 @@ async function bootstrap() {
   await sequelize.authenticate();
   await initModels();
   // 개발 단계: 테이블 없으면 생성 (운영은 마이그레이션 권장)
-  await sequelize.sync();
+  await sequelize.sync({ alter: true })
 
   const app = express();
   app.use(express.json());
