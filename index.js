@@ -5,6 +5,7 @@ import { sequelize, initModels } from './src/db/sequelize.js';
 import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import analysisRoutes from './routes/analysisRoutes.js';
+import transcriptRoutes from './routes/transcriptRoutes.js';
 
 async function bootstrap() {
   await sequelize.authenticate();
@@ -17,6 +18,7 @@ async function bootstrap() {
   app.use('/auth', authRoutes);
   app.use('/profiles', profileRoutes);
   app.use('/analyses', analysisRoutes);
+  app.use('/transcripts', transcriptRoutes);
 
   app.get('/health', async (_, res) => {
     try {
