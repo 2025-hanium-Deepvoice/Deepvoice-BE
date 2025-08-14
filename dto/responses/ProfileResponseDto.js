@@ -1,9 +1,11 @@
+// dto/responses/ProfileResponseDto.js
 import { z } from 'zod';
 
 export const VoiceLiteDto = z.object({
   id: z.number(),
   file_path: z.string(),
   created_at: z.string(),
+  url: z.string().url().optional(), 
 });
 
 export const ProfileResponseDto = z.object({
