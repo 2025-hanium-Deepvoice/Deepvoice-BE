@@ -1,6 +1,7 @@
 // index.js
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';  
 import { sequelize, initModels } from './src/db/sequelize.js';
 import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
@@ -11,17 +12,30 @@ import userRoutes from './routes/userRoutes.js';
 async function bootstrap() {
   await sequelize.authenticate();
   await initModels();
-  // 개발 단계: 테이블 없으면 생성 (운영은 마이그레이션 권장)
-  await sequelize.sync({ alter: true })
+  await sequelize.sync({ alter: true });
 
   const app = express();
+
+  // ✅ CORS 허용 (프론트엔드 주소만)
+  app.use(
+    cors({
+      origin: [
+        'http://localhost:3000'   // 로컬 개발용
+      ],
+      credentials: true,
+    })
+  );
+
   app.use(express.json());
+
+  // 라우트 등록
   app.use('/auth', authRoutes);
   app.use('/profiles', profileRoutes);
   app.use('/analyses', analysisRoutes);
   app.use('/transcripts', transcriptRoutes);
   app.use('/users', userRoutes);
 
+  // Health check
   app.get('/health', async (_, res) => {
     try {
       await sequelize.query('SELECT 1');
@@ -36,7 +50,7 @@ async function bootstrap() {
     console.log(`API running on http://localhost:${port}`)
   );
 
-  // 종료 시 커넥션 종료
+  // 종료 시 커넥션 정리
   for (const sig of ['SIGINT', 'SIGTERM']) {
     process.on(sig, async () => {
       server.close(async () => {
