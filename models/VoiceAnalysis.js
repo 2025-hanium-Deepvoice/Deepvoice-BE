@@ -10,6 +10,7 @@ export default class VoiceAnalysis extends Model {
         confidence: { type: DataTypes.FLOAT, allowNull: true },
         detected_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         user_id: { type: DataTypes.BIGINT, allowNull: false },
+        profile_id: { type: DataTypes.BIGINT, allowNull: true }, 
         duration_seconds: { type: DataTypes.INTEGER, allowNull: true },
         file_name: { type: DataTypes.STRING, allowNull: true },
       },
@@ -22,7 +23,10 @@ export default class VoiceAnalysis extends Model {
     );
   }
 
-  static associate({ User }) {
+  static associate({ User, Profile }) {
     this.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id', as: 'user' });
+
+    // 지인과 관계 설정 (개인화 모델 추적용)
+    this.belongsTo(Profile, { foreignKey: 'profile_id', targetKey: 'id', as: 'profile' });
   }
 }

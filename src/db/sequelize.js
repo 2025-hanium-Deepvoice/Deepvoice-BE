@@ -21,17 +21,17 @@ export async function initModels() {
   const { default: VoiceTranscript } = await import('../../models/VoiceTranscript.js');
   const { default: VoiceAnalysis }   = await import('../../models/VoiceAnalysis.js');
 
-  // init
+  // 1) init
   User.initialize(sequelize);
   Profile.initialize(sequelize);
   Voice.initialize(sequelize);
   VoiceTranscript.initialize(sequelize);
   VoiceAnalysis.initialize(sequelize);
 
-  // associations
+  // 2) associate
   User.associate?.({ Profile, VoiceAnalysis });
   Profile.associate?.({ User, Voice });
   Voice.associate?.({ Profile, VoiceTranscript });
   VoiceTranscript.associate?.({ Voice });
-  VoiceAnalysis.associate?.({ User });
+  VoiceAnalysis.associate?.({ User, Profile }); // ✅ Profile도 같이 넘겨줘야 함
 }
