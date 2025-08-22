@@ -3,12 +3,14 @@ import { s3, S3_BUCKET, buildPublicUrl } from '../s3.js';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import * as mm from 'music-metadata';  
+import * as mm from 'music-metadata';
 import VoiceAnalysis from '../models/VoiceAnalysis.js';
 import VoiceTranscript from '../models/VoiceTranscript.js';
 import axios from 'axios';
 
+
 export const testStt = async (req, res) => {
+
   try {
     const f = req.file;
     if (!f || !f.buffer) {
@@ -42,7 +44,7 @@ export const testStt = async (req, res) => {
     const analysis = await VoiceAnalysis.create({
       file_path: s3Url,
       file_name: f.originalname || null,
-      user_id: req.user?.id ?? 1,
+      user_id: req.user.id,
       detected_at: new Date(),        // 저장 시각
       duration_seconds: durationSeconds, // 음성 길이
     });
@@ -53,37 +55,46 @@ export const testStt = async (req, res) => {
       f.originalname || 'audio.bin',
       f.mimetype
     );
+
+
     // ✅ 5) RAG 호출
-    let ragType = null;
+    let ragTypes = [];
     let ragGuidance = null;
+    let ragResult = null;  // result 텍스트 저장용
+
     try {
       const ragResp = await axios.post(
-        `${process.env.RAG_BASE_URL}/rag`,
+        `${process.env.RAG_URL}`,
         { text: sttRaw?.text ?? '' },
         { headers: { 'x-api-key': process.env.RAG_API_KEY } }
       );
 
-      const sources = ragResp.data?.sources || [];
+      const ragData = ragResp.data;
+      ragResult = ragData?.result ?? null;   // ✅ 최종 답변 텍스트만
 
-      // sources에서 type, guidance 분리
-      const caseSrc = sources.find(s => s.metadata?.type === 'case');
+      const sources = ragData?.sources || [];
+
+      // type만 추출
+      const types = sources.map(s => s.metadata?.type).filter(Boolean);
+      ragTypes = [...new Set(types)];
+
+      // guidance는 guide snippet 따로
       const guideSrc = sources.find(s => s.metadata?.type === 'guide');
-
-      ragType = caseSrc?.snippet || null;
       ragGuidance = guideSrc?.snippet || null;
 
     } catch (err) {
       console.warn('[WARN] RAG 호출 실패:', err.message);
     }
 
-
     // ✅ 6) VoiceTranscript row 생성
     const transcript = await VoiceTranscript.create({
-      voice_id: analysis.id,             // FK
-      transcript: sttRaw?.text ?? '',    // STT 원문
-      type: ragType,                     // RAG 분석 결과 (범죄 유형)
-      guidance: ragGuidance,             // RAG 분석 결과 (대처법)
+      voice_id: analysis.id,
+      transcript: sttRaw?.text ?? '',
+      type: ragTypes.join(','),   // 여러 개면 콤마 구분
+      guidance: ragGuidance,
+      result: ragResult           // ✅ result 저장
     });
+
 
     return res.json({
       ok: true,
