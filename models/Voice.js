@@ -19,7 +19,6 @@ export default class Voice extends Model {
   }
 
   static associate({ Profile, VoiceTranscript }) {
-    this.belongsTo(Profile, { foreignKey: 'profile_id', targetKey: 'id', as: 'profile' });
-    this.hasOne(VoiceTranscript, { foreignKey: 'voice_id', sourceKey: 'id', as: 'transcript' });
+    this.belongsTo(Profile, { foreignKey: 'profile_id', targetKey: 'id', as: 'profile' });  
   }
 }

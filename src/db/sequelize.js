@@ -28,10 +28,11 @@ export async function initModels() {
   VoiceTranscript.initialize(sequelize);
   VoiceAnalysis.initialize(sequelize);
 
-  // 2) associate
-  User.associate?.({ Profile, VoiceAnalysis });
-  Profile.associate?.({ User, Voice });
-  Voice.associate?.({ Profile, VoiceTranscript });
-  VoiceTranscript.associate?.({ Voice });
-  VoiceAnalysis.associate?.({ User, Profile }); // ✅ Profile도 같이 넘겨줘야 함
+// 2) associate
+User.associate?.({ Profile, VoiceAnalysis });
+Profile.associate?.({ User, Voice });
+Voice.associate?.({ Profile });   // ✅ Transcript 관계 제거
+VoiceTranscript.associate?.({ VoiceAnalysis }); // ✅ Voice 대신 VoiceAnalysis
+VoiceAnalysis.associate?.({ User, Profile, VoiceTranscript }); // ✅ Transcript까지 연결
+
 }

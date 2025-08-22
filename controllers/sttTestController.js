@@ -6,6 +6,7 @@ import path from 'path';
 import * as mm from 'music-metadata';  
 import VoiceAnalysis from '../models/VoiceAnalysis.js';
 import VoiceTranscript from '../models/VoiceTranscript.js';
+import axios from 'axios';
 
 export const testStt = async (req, res) => {
   try {
@@ -52,13 +53,36 @@ export const testStt = async (req, res) => {
       f.originalname || 'audio.bin',
       f.mimetype
     );
+    // ✅ 5) RAG 호출
+    let ragType = null;
+    let ragGuidance = null;
+    try {
+      const ragResp = await axios.post(
+        `${process.env.RAG_BASE_URL}/rag`,
+        { text: sttRaw?.text ?? '' },
+        { headers: { 'x-api-key': process.env.RAG_API_KEY } }
+      );
 
-    // ✅ 5) VoiceTranscript row 생성
+      const sources = ragResp.data?.sources || [];
+
+      // sources에서 type, guidance 분리
+      const caseSrc = sources.find(s => s.metadata?.type === 'case');
+      const guideSrc = sources.find(s => s.metadata?.type === 'guide');
+
+      ragType = caseSrc?.snippet || null;
+      ragGuidance = guideSrc?.snippet || null;
+
+    } catch (err) {
+      console.warn('[WARN] RAG 호출 실패:', err.message);
+    }
+
+
+    // ✅ 6) VoiceTranscript row 생성
     const transcript = await VoiceTranscript.create({
-      voice_id: analysis.id,
-      transcript: sttRaw?.text ?? '',
-      type: null,
-      guidance: null,
+      voice_id: analysis.id,             // FK
+      transcript: sttRaw?.text ?? '',    // STT 원문
+      type: ragType,                     // RAG 분석 결과 (범죄 유형)
+      guidance: ragGuidance,             // RAG 분석 결과 (대처법)
     });
 
     return res.json({
@@ -72,7 +96,7 @@ export const testStt = async (req, res) => {
     console.error('[STT test error]', e?.response?.data || e);
     return res.status(502).json({
       ok: false,
-      message: 'STT 서버 호출 실패',
+      message: 'STT 서버/RAG 호출 실패',
       detail: e?.response?.data || e?.message || String(e),
     });
   }
