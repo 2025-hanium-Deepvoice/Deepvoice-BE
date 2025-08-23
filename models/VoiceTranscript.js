@@ -7,9 +7,9 @@ export default class VoiceTranscript extends Model {
         id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
         transcript: { type: DataTypes.TEXT, allowNull: true },
         type: { type: DataTypes.STRING, allowNull: true },
+        suspicious_sentences: { type: DataTypes.TEXT, allowNull: true }, 
         guidance: { type: DataTypes.TEXT, allowNull: true },
         voice_id: { type: DataTypes.BIGINT, allowNull: false },
-        result: { type: DataTypes.TEXT },
       },
       {
         sequelize,

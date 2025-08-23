@@ -57,42 +57,54 @@ export const testStt = async (req, res) => {
     );
 
 
-    // ✅ 5) RAG 호출
-    let ragTypes = [];
+     // ✅ 5) RAG 호출
+    let ragType = null;
     let ragGuidance = null;
-    let ragResult = null;  // result 텍스트 저장용
+    let ragSuspicious = null;
+    let ragResult = null;
+    let ragProbability = null;
 
     try {
       const ragResp = await axios.post(
         `${process.env.RAG_URL}`,
         { text: sttRaw?.text ?? '' },
-        { headers: { 'x-api-key': process.env.RAG_API_KEY } }
+        {
+          headers: { 'x-api-key': process.env.RAG_API_KEY },
+          timeout: 30000, // 타임아웃 30초
+        }
       );
 
       const ragData = ragResp.data;
-      ragResult = ragData?.result ?? null;   // ✅ 최종 답변 텍스트만
+      ragResult = ragData?.similar_cases_summary ?? null;
+      ragType = ragData?.type ?? null;
+      ragProbability = ragData?.probability ?? null;
 
-      const sources = ragData?.sources || [];
+      // 배열은 JSON 문자열로 저장
+      ragSuspicious = ragData?.suspicious_sentences
+        ? JSON.stringify(ragData.suspicious_sentences)
+        : null;
 
-      // type만 추출
-      const types = sources.map(s => s.metadata?.type).filter(Boolean);
-      ragTypes = [...new Set(types)];
-
-      // guidance는 guide snippet 따로
-      const guideSrc = sources.find(s => s.metadata?.type === 'guide');
-      ragGuidance = guideSrc?.snippet || null;
+      ragGuidance = ragData?.actions
+        ? JSON.stringify(ragData.actions)
+        : null;
 
     } catch (err) {
       console.warn('[WARN] RAG 호출 실패:', err.message);
     }
 
-    // ✅ 6) VoiceTranscript row 생성
+    // ✅ 6) RAG 결과 업데이트 (VoiceAnalysis에 llm_confidence 저장)
+    if (ragProbability !== null) {
+      analysis.llm_confidence = ragProbability;
+      await analysis.save();
+    }
+
+    // ✅ 7) VoiceTranscript row 생성
     const transcript = await VoiceTranscript.create({
       voice_id: analysis.id,
       transcript: sttRaw?.text ?? '',
-      type: ragTypes.join(','),   // 여러 개면 콤마 구분
+      type: ragType,
+      suspicious_sentences: ragSuspicious,
       guidance: ragGuidance,
-      result: ragResult           // ✅ result 저장
     });
 
 
