@@ -7,7 +7,6 @@ export default class VoiceTranscript extends Model {
         id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
         transcript: { type: DataTypes.TEXT, allowNull: true },
         type: { type: DataTypes.STRING, allowNull: true },
-        suspicious_sentences: { type: DataTypes.TEXT, allowNull: true }, 
         guidance: { type: DataTypes.TEXT, allowNull: true },
         voice_id: { type: DataTypes.BIGINT, allowNull: false },
       },
@@ -20,7 +19,19 @@ export default class VoiceTranscript extends Model {
     );
   }
 
-  static associate({ VoiceAnalysis }) {
-    this.belongsTo(VoiceAnalysis, { foreignKey: 'voice_id', targetKey: 'id', as: 'analysis' });
+  static associate({ VoiceAnalysis, VoiceSuspiciousSentence }) {
+    // ✅ Transcript → Analysis (N:1)
+    this.belongsTo(VoiceAnalysis, {
+      foreignKey: 'voice_id',
+      targetKey: 'id',
+      as: 'analysis',
+    });
+
+    // ✅ Transcript → SuspiciousSentences (1:N)
+    this.hasMany(VoiceSuspiciousSentence, {
+      foreignKey: 'transcript_id',
+      as: 'suspicious_sentences',
+      onDelete: 'CASCADE',
+    });
   }
 }

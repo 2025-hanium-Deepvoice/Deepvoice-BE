@@ -7,6 +7,7 @@ import * as mm from 'music-metadata';
 import VoiceAnalysis from '../models/VoiceAnalysis.js';
 import VoiceTranscript from '../models/VoiceTranscript.js';
 import axios from 'axios';
+import VoiceSuspiciousSentence from '../models/VoiceSuspiciousSentence.js';
 
 
 export const testStt = async (req, res) => {
@@ -57,11 +58,10 @@ export const testStt = async (req, res) => {
     );
 
 
-     // ✅ 5) RAG 호출
+    // ✅ 5) RAG 호출
     let ragType = null;
     let ragGuidance = null;
-    let ragSuspicious = null;
-    let ragResult = null;
+    let ragSuspicious = [];
     let ragProbability = null;
 
     try {
@@ -70,19 +70,17 @@ export const testStt = async (req, res) => {
         { text: sttRaw?.text ?? '' },
         {
           headers: { 'x-api-key': process.env.RAG_API_KEY },
-          timeout: 30000, // 타임아웃 30초
+          timeout: 30000,
         }
       );
 
       const ragData = ragResp.data;
-      ragResult = ragData?.similar_cases_summary ?? null;
       ragType = ragData?.type ?? null;
       ragProbability = ragData?.probability ?? null;
 
-      // 배열은 JSON 문자열로 저장
-      ragSuspicious = ragData?.suspicious_sentences
-        ? JSON.stringify(ragData.suspicious_sentences)
-        : null;
+      ragSuspicious = Array.isArray(ragData?.suspicious_sentences)
+        ? ragData.suspicious_sentences
+        : [];
 
       ragGuidance = ragData?.actions
         ? JSON.stringify(ragData.actions)
@@ -98,21 +96,30 @@ export const testStt = async (req, res) => {
       await analysis.save();
     }
 
-    // ✅ 7) VoiceTranscript row 생성
+    // ✅ 7) Transcript 저장
     const transcript = await VoiceTranscript.create({
       voice_id: analysis.id,
       transcript: sttRaw?.text ?? '',
       type: ragType,
-      suspicious_sentences: ragSuspicious,
       guidance: ragGuidance,
     });
 
+    // ✅ 8) Suspicious Sentences 저장 (bulk insert)
+    if (ragSuspicious.length > 0) {
+      const suspiciousRows = ragSuspicious.map(sentence => ({
+        transcript_id: transcript.id,
+        sentence: sentence,
+      }));
+
+      await VoiceSuspiciousSentence.bulkCreate(suspiciousRows);
+    }
 
     return res.json({
       ok: true,
       s3Url,
       analysis,
       transcript,
+      suspicious_sentences: ragSuspicious, // 응답에 포함
       stt_raw: sttRaw,
     });
   } catch (e) {
