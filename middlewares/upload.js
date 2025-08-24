@@ -1,32 +1,37 @@
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-
-const uploadDir = path.resolve('uploads/voices');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.memoryStorage();
 
+const audioTypes = [
+  'audio/mpeg', 'audio/wav', 'audio/webm', 'audio/x-wav', 'audio/mp4'
+];
+
+const imageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+
 const fileFilter = (req, file, cb) => {
-  // 허용할 오디오 MIME 타입
-  const okTypes = [
-    'audio/mpeg',     // mp3
-    'audio/wav',      // wav
-    'audio/webm',     // webm
-    'audio/x-wav',    // wav (다른 mime)
-    'audio/mp4'       // m4a (iPhone, Safari 업로드)
-  ];
-
-  if (!okTypes.includes(file.mimetype)) {
-    return cb(new Error(`지원하지 않는 오디오 형식입니다. (mimetype: ${file.mimetype})`), false);
+  if ([...audioTypes, ...imageTypes].includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`지원하지 않는 파일 형식입니다. (mimetype: ${file.mimetype})`), false);
   }
-
-  cb(null, true);
 };
 
+// ✅ STT 용 (음성만)
 export const uploadVoice = multer({
   storage,
+  fileFilter: (req, file, cb) => {
+    if (audioTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('지원하지 않는 오디오 형식입니다.'), false);
+  },
+  limits: { fileSize: 50 * 1024 * 1024 }
+}).single('voice');
+
+// ✅ 프로필 등록용 (음성 + 프로필 사진)
+export const uploadProfile = multer({
+  storage,
   fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB 등 필요에 맞게
-}).single('voice'); // form-data 필드명: voice
+  limits: { fileSize: 50 * 1024 * 1024 }
+}).fields([
+  { name: 'voice', maxCount: 1 },
+  { name: 'profile_image', maxCount: 1 }
+]);
