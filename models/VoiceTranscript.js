@@ -9,6 +9,8 @@ export default class VoiceTranscript extends Model {
         type: { type: DataTypes.STRING, allowNull: true },
         guidance: { type: DataTypes.TEXT, allowNull: true },
         voice_id: { type: DataTypes.BIGINT, allowNull: false },
+        similar_cases_summary: { type: DataTypes.TEXT, allowNull: true },
+        llm_confidence: { type: DataTypes.FLOAT, allowNull: true }, 
       },
       {
         sequelize,
@@ -19,7 +21,19 @@ export default class VoiceTranscript extends Model {
     );
   }
 
-  static associate({ Voice }) {
-    this.belongsTo(Voice, { foreignKey: 'voice_id', targetKey: 'id', as: 'voice' });
+  static associate({ VoiceAnalysis, VoiceSuspiciousSentence }) {
+    // ✅ Transcript → Analysis (N:1)
+    this.belongsTo(VoiceAnalysis, {
+      foreignKey: 'voice_id',
+      targetKey: 'id',
+      as: 'analysis',
+    });
+
+    // ✅ Transcript → SuspiciousSentences (1:N)
+    this.hasMany(VoiceSuspiciousSentence, {
+      foreignKey: 'transcript_id',
+      as: 'suspicious_sentences',
+      onDelete: 'CASCADE',
+    });
   }
 }

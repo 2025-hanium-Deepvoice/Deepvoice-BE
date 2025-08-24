@@ -8,6 +8,9 @@ import profileRoutes from './routes/profileRoutes.js';
 import analysisRoutes from './routes/analysisRoutes.js';
 import transcriptRoutes from './routes/transcriptRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import sttRoutes from './routes/sttRoutes.js';
+import ragRoutes from './routes/ragRoutes.js';
+
 
 async function bootstrap() {
   await sequelize.authenticate();
@@ -34,6 +37,10 @@ async function bootstrap() {
   app.use('/analyses', analysisRoutes);
   app.use('/transcripts', transcriptRoutes);
   app.use('/users', userRoutes);
+  app.use('/stt', sttRoutes);
+  app.use('/uploads', express.static('uploads'));
+  app.use('/rag', ragRoutes);
+
 
   // Health check
   app.get('/health', async (_, res) => {

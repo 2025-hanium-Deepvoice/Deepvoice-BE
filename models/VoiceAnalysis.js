@@ -6,10 +6,11 @@ export default class VoiceAnalysis extends Model {
       {
         id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
         file_path: { type: DataTypes.STRING, allowNull: true },
-        is_phishing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }, 
+        is_phishing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         confidence: { type: DataTypes.FLOAT, allowNull: true },
         detected_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         user_id: { type: DataTypes.BIGINT, allowNull: false },
+        profile_id: { type: DataTypes.BIGINT, allowNull: true },
         duration_seconds: { type: DataTypes.INTEGER, allowNull: true },
         file_name: { type: DataTypes.STRING, allowNull: true },
       },
@@ -22,7 +23,8 @@ export default class VoiceAnalysis extends Model {
     );
   }
 
-  static associate({ User }) {
+  static associate({ User, Profile }) {
     this.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id', as: 'user' });
+    this.belongsTo(Profile, { foreignKey: 'profile_id', targetKey: 'id', as: 'profile' });
   }
 }
