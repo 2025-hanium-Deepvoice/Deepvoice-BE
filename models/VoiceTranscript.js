@@ -9,6 +9,7 @@ export default class VoiceTranscript extends Model {
         type: { type: DataTypes.STRING, allowNull: true },
         guidance: { type: DataTypes.TEXT, allowNull: true },
         voice_id: { type: DataTypes.BIGINT, allowNull: false },
+        similar_cases_summary: { type: DataTypes.TEXT, allowNull: true },
       },
       {
         sequelize,

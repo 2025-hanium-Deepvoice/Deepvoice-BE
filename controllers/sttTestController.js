@@ -62,7 +62,7 @@ export const testStt = async (req, res) => {
     let ragType = null;
     let ragGuidance = null;
     let ragSuspicious = [];
-    let ragProbability = null;
+    let ragProbability = null;let ragSimilarSummary = null; 
 
     try {
       const ragResp = await axios.post(
@@ -86,6 +86,7 @@ export const testStt = async (req, res) => {
         ? JSON.stringify(ragData.actions)
         : null;
 
+      ragSimilarSummary = ragData?.similar_cases_summary ?? null;  // ✅ 요약 저장
     } catch (err) {
       console.warn('[WARN] RAG 호출 실패:', err.message);
     }
@@ -97,11 +98,12 @@ export const testStt = async (req, res) => {
     }
 
     // ✅ 7) Transcript 저장
-    const transcript = await VoiceTranscript.create({
+     const transcript = await VoiceTranscript.create({
       voice_id: analysis.id,
       transcript: sttRaw?.text ?? '',
       type: ragType,
       guidance: ragGuidance,
+      similar_cases_summary: ragSimilarSummary, 
     });
 
     // ✅ 8) Suspicious Sentences 저장 (bulk insert)
