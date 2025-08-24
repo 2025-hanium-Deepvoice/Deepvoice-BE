@@ -10,6 +10,7 @@ export default class VoiceTranscript extends Model {
         guidance: { type: DataTypes.TEXT, allowNull: true },
         voice_id: { type: DataTypes.BIGINT, allowNull: false },
         similar_cases_summary: { type: DataTypes.TEXT, allowNull: true },
+        llm_confidence: { type: DataTypes.FLOAT, allowNull: true }, 
       },
       {
         sequelize,

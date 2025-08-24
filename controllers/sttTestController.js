@@ -91,12 +91,6 @@ export const testStt = async (req, res) => {
       console.warn('[WARN] RAG 호출 실패:', err.message);
     }
 
-    // ✅ 6) RAG 결과 업데이트 (VoiceAnalysis에 llm_confidence 저장)
-    if (ragProbability !== null) {
-      analysis.llm_confidence = ragProbability;
-      await analysis.save();
-    }
-
     // ✅ 7) Transcript 저장
      const transcript = await VoiceTranscript.create({
       voice_id: analysis.id,
@@ -104,6 +98,7 @@ export const testStt = async (req, res) => {
       type: ragType,
       guidance: ragGuidance,
       similar_cases_summary: ragSimilarSummary, 
+      llm_confidence: ragProbability,
     });
 
     // ✅ 8) Suspicious Sentences 저장 (bulk insert)

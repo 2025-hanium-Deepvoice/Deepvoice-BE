@@ -8,7 +8,6 @@ export default class VoiceAnalysis extends Model {
         file_path: { type: DataTypes.STRING, allowNull: true },
         is_phishing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         confidence: { type: DataTypes.FLOAT, allowNull: true },
-        llm_confidence: { type: DataTypes.FLOAT, allowNull: true },  // ✅ 추가
         detected_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         user_id: { type: DataTypes.BIGINT, allowNull: false },
         profile_id: { type: DataTypes.BIGINT, allowNull: true },
