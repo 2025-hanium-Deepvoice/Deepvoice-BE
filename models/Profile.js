@@ -9,6 +9,7 @@ export default class Profile extends Model {
         relation: { type: DataTypes.STRING, allowNull: true },
         created_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         user_id: { type: DataTypes.BIGINT, allowNull: false },
+        profile_image_url: { type: DataTypes.STRING, allowNull: true },
       },
       {
         sequelize,
